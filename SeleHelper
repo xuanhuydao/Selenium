@@ -1,0 +1,123 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace RegTW
+{
+    
+    internal class SeleHelper
+    {
+        public static ChromeDriver SetupChromeDriver()
+        {
+            ChromeOptions options = new ChromeOptions();
+            options.AddArgument("--disable-gpu");          // Tắt GPU, hữu ích khi chạy headless
+            options.AddArgument("window-size=480x360");   // Đặt kích thước cửa sổ trình duyệt
+            //options.AddArgument("--headless");            // Tùy chọn chạy Chrome mà không hiển thị GUI
+            //options.AddArgument("--no-sandbox");          // Tùy chọn này giúp chạy trong một số môi trường đặc biệt
+
+            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+            service.HideCommandPromptWindow = true;
+
+            ChromeDriver driver = new ChromeDriver(service, options);
+            //driver.Manage().Window.Size = new Size(480, 360);
+            return driver;
+        }
+        public static IWebElement FindElementByXpath(ChromeDriver driver, string xpath, TimeSpan timeout)
+        {
+            try
+            {
+                
+                WebDriverWait wait = new WebDriverWait(driver, timeout);
+
+
+                IWebElement element = wait.Until(d => IsElementEnabled(d, xpath));
+
+
+                Console.WriteLine("Found element: " + element.Text);
+
+                return element;
+            }
+            catch(WebDriverTimeoutException)
+            {
+                
+                Console.WriteLine($"Element with XPath '{xpath}' was not found within the given timeout.");
+                return null;
+            }
+            catch(NoSuchElementException)
+            {
+                
+                Console.WriteLine($"No such element found for XPath: {xpath}");
+                return null;
+            }
+            catch(Exception ex)
+            {
+                
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return null;
+            }
+
+        }
+        public static void SendKeys(IWebElement element,string str)
+        {
+            try
+            {
+                if (element.Displayed && element.Enabled)
+                {
+                    element.SendKeys(str);
+                }
+                else
+                {
+                    Console.WriteLine("Element not visible");
+                }
+            }
+            catch (ElementNotInteractableException)
+            {
+                Console.WriteLine("The element is not interactable.");
+            }
+            catch (Exception ex)
+            {
+                // Xử lý các lỗi khác (ví dụ: không tìm thấy phần tử)
+                Console.WriteLine($"An error occurred while sending keys: {ex.Message}");
+            }
+        }
+        public static IWebElement IsElementEnabled(IWebDriver driver, string xpath)
+        {
+            try
+            {
+                IWebElement element = driver.FindElement(By.XPath(xpath));
+
+                // Kiểm tra phần tử có thể click được không (đảm bảo phần tử không bị ẩn hoặc không thể tương tác)
+                if (element.Displayed && element.Enabled)
+                {
+                    return element;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                // Nếu phần tử không tìm thấy, trả về null
+                return null;
+            }
+        }
+        public static void QuitDriver(ChromeDriver driver)
+        {
+            try
+            {
+                driver.Quit(); // Chắc chắn là gọi Quit sau khi bạn đã hoàn tất mọi thao tác
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error quitting driver: " + ex.Message);
+            }
+        }
+    }
+}
+
